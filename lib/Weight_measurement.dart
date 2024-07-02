@@ -27,9 +27,9 @@ class WeightMeasurementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var qrImage2 = QrImage(
-      data: qrData,
-      size: 200,
-    );
+        //    data: qrData,
+        //   size: 200,
+        );
     var qrImage = qrImage2;
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +46,7 @@ class WeightMeasurementScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            qrImage,
+            //         qrImage,
             SizedBox(height: 20),
             Text(
               'น้ำหนัก: $weight',
