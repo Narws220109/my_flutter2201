@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+// ignore: directives_ordering, depend_on_referenced_packages
 import 'package:path/path.dart';
 import 'HomePage.dart'; // นำเข้าไฟล์ HomePage.dart
 
@@ -89,17 +90,11 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              width: double.infinity,
-              height: 200.0,
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                image: DecorationImage(
-                  image: AssetImage('assets/your_image.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
+          children: [
+            Image.asset(
+              "assets/images/sadwel.jpg",
+              width: 150,
+              height: 150,
             ),
             const SizedBox(height: 20.0),
             const Text(
@@ -174,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     if (employee == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('ไม่พบผู้ใช้งาน')),
+                        const SnackBar(content: Text('ไม่พบผู้ใช้งาน')),
                       );
                       // ลบข้อมูลที่กรอก
                       _idController.clear();
