@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
 import 'HomePage.dart'; // นำเข้าไฟล์ HomePage.dart
 
 void main() {
@@ -90,17 +91,20 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            Container(
-              width: double.infinity,
-              height: 200.0,
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                image: DecorationImage(
-                  image: AssetImage('assets/your_image.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
+            Image.asset(
+              'assets/images/welcome.jpg',
             ),
+            // Container(
+            //   width: double.infinity,
+            //   height: 200.0,
+            //   decoration: BoxDecoration(
+            //     color: Colors.grey,
+            //     image: DecorationImage(
+            //       image: AssetImage('assets/eqwelcome.jpg'),
+            //       fit: BoxFit.cover,
+            //     ),
+            //   ),
+            // ),
             const SizedBox(height: 20.0),
             const Text(
               'กรุณาลงชื่อเข้าใช้',
