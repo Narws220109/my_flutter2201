@@ -1,24 +1,9 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Weight Comparison',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: WeightComparisonScreen(),
-    );
-  }
-}
-
+// ignore: use_key_in_widget_constructors
 class WeightComparisonScreen extends StatefulWidget {
   @override
+  // ignore: library_private_types_in_public_api
   _WeightComparisonScreenState createState() => _WeightComparisonScreenState();
 }
 
@@ -33,23 +18,23 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text('Weight Comparison'),
+        title: const Text('Weight Comparison'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          children: [
+          children: <Widget>[
             _buildDatabaseSection(),
-            Divider(),
+            const Divider(),
             _buildConnectionSection(),
-            Divider(),
+            const Divider(),
             _buildBasketWeightSection(),
-            Divider(),
+            const Divider(),
             _buildCalibrationSection(),
           ],
         ),
@@ -60,22 +45,22 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
   Widget _buildDatabaseSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('ฐานข้อมูล', style: TextStyle(fontSize: 18)),
+      children: <Widget>[
+        const Text('ฐานข้อมูล', style: TextStyle(fontSize: 18)),
         Row(
-          children: [
+          children: <Widget>[
             ElevatedButton(
               onPressed: () {
                 // ใส่โค้ดสำหรับการเชื่อมต่อฐานข้อมูล
               },
-              child: Text('เชื่อมต่อ'),
+              child: const Text('เชื่อมต่อ'),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
                 // ใส่โค้ดสำหรับการบันทึกค่าการเชื่อมต่อ
               },
-              child: Text('บันทึกค่า'),
+              child: const Text('บันทึกค่า'),
             ),
           ],
         ),
@@ -86,22 +71,22 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
   Widget _buildConnectionSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('การเชื่อมต่อ', style: TextStyle(fontSize: 18)),
+      children: <Widget>[
+        const Text('การเชื่อมต่อ', style: TextStyle(fontSize: 18)),
         Row(
-          children: [
+          children: <Widget>[
             ElevatedButton(
               onPressed: () {
                 // ใส่โค้ดสำหรับการเลือกบลูทูธ
               },
-              child: Text('เลือกบลูทูธ'),
+              child: const Text('เลือกบลูทูธ'),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
                 // ใส่โค้ดสำหรับการบันทึกการเชื่อมต่อบลูทูธ
               },
-              child: Text('บันทึก'),
+              child: const Text('บันทึก'),
             ),
           ],
         ),
@@ -112,22 +97,22 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
   Widget _buildBasketWeightSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
+      children: <Widget>[
         Expanded(
           child: TextField(
             controller: _basketWeightController,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'น้ำหนักตะกร้า (กก.)',
             ),
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         ElevatedButton(
           onPressed: () {
             // ใส่โค้ดสำหรับบันทึกน้ำหนักตะกร้า
           },
-          child: Text('บันทึก'),
+          child: const Text('บันทึก'),
         ),
       ],
     );
@@ -136,19 +121,19 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
   Widget _buildCalibrationSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Row(
-          children: [
+          children: <Widget>[
             Expanded(
               child: TextField(
                 controller: _weightController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'น้ำหนัก (กก.)',
                 ),
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -156,14 +141,14 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
                       double.tryParse(_weightController.text) ?? 0.0;
                 });
               },
-              child: Text('อ่านค่า'),
+              child: const Text('อ่านค่า'),
             ),
           ],
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text('น้ำหนักก่อนอ่านค่า: $_calibratedWeight กก.'),
         Text('น้ำหนักหลังอ่านค่า: $_measuredWeight กก.'),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         ElevatedButton(
           onPressed: () {
             setState(() {
@@ -171,7 +156,7 @@ class _WeightComparisonScreenState extends State<WeightComparisonScreen> {
             });
             // ใส่โค้ดสำหรับบันทึกค่าการกำหนดน้ำหนัก
           },
-          child: Text('บันทึกค่า'),
+          child: const Text('บันทึกค่า'),
         ),
       ],
     );

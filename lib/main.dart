@@ -1,5 +1,8 @@
+// ignore_for_file: avoid_redundant_argument_values, prefer_const_constructors, prefer_final_locals, use_build_context_synchronously, always_specify_types, sort_constructors_first, use_key_in_widget_constructors
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+// ignore: directives_ordering, depend_on_referenced_packages
 import 'package:path/path.dart';
 import 'HomePage.dart'; // นำเข้าไฟล์ HomePage.dart
 
@@ -90,16 +93,11 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            Container(
+            Image.asset(
+              'assets/welcome.jpg',
               width: double.infinity,
               height: 200.0,
-              decoration: BoxDecoration(
-                color: Colors.grey,
-                image: DecorationImage(
-                  image: AssetImage('assets/your_image.jpg'),
-                  fit: BoxFit.cover,
-                ),
-              ),
+              fit: BoxFit.cover,
             ),
             const SizedBox(height: 20.0),
             const Text(

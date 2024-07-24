@@ -1,27 +1,13 @@
+// ignore_for_file: file_names, directives_ordering
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Account Management',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: AccountManagementPage(),
-    );
-  }
-}
-
+// ignore: use_key_in_widget_constructors
 class AccountManagementPage extends StatefulWidget {
   @override
+  // ignore: library_private_types_in_public_api
   _AccountManagementPageState createState() => _AccountManagementPageState();
 }
 
@@ -29,8 +15,9 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
   File? _image;
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -43,9 +30,9 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('การจัดการบัญชีผู้ใช้'),
+        title: const Text('การจัดการบัญชีผู้ใช้'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -55,24 +42,25 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
+          children: <Widget>[
+            const Center(
               child: Text(
                 'การจัดการบัญชีผู้ใช้',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Expanded(
               child: Table(
-                columnWidths: {
-                  0: IntrinsicColumnWidth(),
-                  1: FlexColumnWidth(),
+                // ignore: prefer_const_literals_to_create_immutables
+                columnWidths: <int, TableColumnWidth>{
+                  0: const IntrinsicColumnWidth(),
+                  1: const FlexColumnWidth(),
                 },
                 defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: [
-                  TableRow(
-                    children: [
+                children: <TableRow>[
+                  const TableRow(
+                    children: <Widget>[
                       Icon(Icons.person, size: 25),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -84,11 +72,11 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       SizedBox(),
                       Padding(
-                        padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
                         child: TextField(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
@@ -98,8 +86,8 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       Icon(Icons.work, size: 25),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -111,11 +99,11 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       SizedBox(),
                       Padding(
-                        padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
                         child: TextField(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
@@ -125,8 +113,8 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       Icon(Icons.badge, size: 25),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -138,11 +126,11 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       SizedBox(),
                       Padding(
-                        padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
                         child: TextField(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
@@ -152,8 +140,8 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       Icon(Icons.email, size: 25),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -165,11 +153,11 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       SizedBox(),
                       Padding(
-                        padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
                         child: TextField(
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
@@ -179,8 +167,8 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                       ),
                     ],
                   ),
-                  TableRow(
-                    children: [
+                  const TableRow(
+                    children: <Widget>[
                       Icon(Icons.photo_camera, size: 25),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -193,25 +181,25 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                     ],
                   ),
                   TableRow(
-                    children: [
-                      SizedBox(),
+                    children: <Widget>[
+                      const SizedBox(),
                       Padding(
                         padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                         child: Row(
-                          children: [
+                          children: <Widget>[
                             CircleAvatar(
                               radius: 40,
                               backgroundImage: _image != null
                                   ? FileImage(_image!)
-                                  : NetworkImage(
+                                  : const NetworkImage(
                                           'https://via.placeholder.com/150')
                                       as ImageProvider,
                             ),
-                            SizedBox(width: 20),
+                            const SizedBox(width: 20),
                             ElevatedButton.icon(
                               onPressed: _pickImage,
-                              icon: Icon(Icons.file_upload),
-                              label: Text('เลือกไฟล์'),
+                              icon: const Icon(Icons.file_upload),
+                              label: const Text('เลือกไฟล์'),
                             ),
                           ],
                         ),
@@ -227,7 +215,7 @@ class _AccountManagementPageState extends State<AccountManagementPage> {
                 onPressed: () {
                   // Save changes
                 },
-                child: Text('บันทึก'),
+                child: const Text('บันทึก'),
               ),
             ),
           ],

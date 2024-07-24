@@ -1,6 +1,10 @@
+// ignore_for_file: prefer_const_constructors, avoid_redundant_argument_values
+
 import 'package:flutter/material.dart';
 
 class MainMenuScreen extends StatelessWidget {
+  const MainMenuScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,12 +1,10 @@
+// ignore_for_file: use_build_context_synchronously, prefer_final_locals, avoid_redundant_argument_values, sort_constructors_first, always_specify_types, prefer_single_quotes
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 // ignore: directives_ordering, depend_on_referenced_packages
 import 'package:path/path.dart';
 import 'HomePage.dart'; // นำเข้าไฟล์ HomePage.dart
-
-void main() {
-  runApp(const MyApp());
-}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -114,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     child: TextField(
                       controller: _idController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'รหัสประจำตัวพนักงาน',
                         border: UnderlineInputBorder(),
                         focusedBorder: UnderlineInputBorder(
@@ -137,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: TextField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'รหัสผ่าน',
                         border: UnderlineInputBorder(),
                         focusedBorder: UnderlineInputBorder(
@@ -160,7 +158,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     if (id.isEmpty || password.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('กรอกข้อมูลเพื่อลงชื่อเข้าใช้')),
+                        const SnackBar(
+                            content: Text('กรอกข้อมูลเพื่อลงชื่อเข้าใช้')),
                       );
                       return;
                     }
@@ -185,16 +184,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     } else {
                       if (employee['password'] == password) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
+                          const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
                         );
                         Navigator.push(
                           context,
                           // ignore: inference_failure_on_instance_creation
-                          MaterialPageRoute(builder: (context) => HomePage()),
+                          MaterialPageRoute(
+                              builder: (context) => const HomePage()),
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('รหัสผ่านไม่ถูกต้อง')),
+                          const SnackBar(content: Text('รหัสผ่านไม่ถูกต้อง')),
                         );
                       }
                     }
@@ -226,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class RegistrationPage extends StatelessWidget {
   final Database database;
 
-  RegistrationPage({required this.database});
+  RegistrationPage({super.key, required this.database});
 
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -243,7 +243,7 @@ class RegistrationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('สมัครสมาชิก'),
+        title: const Text('สมัครสมาชิก'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -251,7 +251,7 @@ class RegistrationPage extends StatelessWidget {
           children: [
             TextField(
               controller: _idController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'รหัสประจำตัวพนักงาน',
                 border: UnderlineInputBorder(),
                 focusedBorder: UnderlineInputBorder(
@@ -263,7 +263,7 @@ class RegistrationPage extends StatelessWidget {
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'รหัสผ่าน',
                 border: UnderlineInputBorder(),
                 focusedBorder: UnderlineInputBorder(
@@ -279,14 +279,14 @@ class RegistrationPage extends StatelessWidget {
 
                 if (id.isEmpty || password.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('กรุณากรอกข้อมูลให้ครบถ้วน')),
+                    const SnackBar(content: Text('กรุณากรอกข้อมูลให้ครบถ้วน')),
                   );
                   return;
                 }
 
                 await insertEmployee(id, password);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('ลงทะเบียนสำเร็จ')),
+                  const SnackBar(content: Text('ลงทะเบียนสำเร็จ')),
                 );
                 Navigator.pop(context);
               },

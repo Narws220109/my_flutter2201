@@ -1,26 +1,14 @@
+// ignore_for_file: file_names, prefer_const_literals_to_create_immutables
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Add Employee',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: EmployeeManagementPage(),
-    );
-  }
-}
-
 class EmployeeManagementPage extends StatefulWidget {
+  const EmployeeManagementPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _EmployeeManagementPageState createState() => _EmployeeManagementPageState();
 }
 
@@ -40,9 +28,9 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('เพิ่มข้อมูลพนักงาน'),
+        title: const Text('เพิ่มข้อมูลพนักงาน'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -52,29 +40,29 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
         padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
+          children: <Widget>[
+            const Center(
               child: Text(
                 'เพิ่มข้อมูลพนักงาน',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Table(
-              columnWidths: {
-                0: IntrinsicColumnWidth(),
-                1: FlexColumnWidth(),
+              columnWidths: <int, TableColumnWidth>{
+                0: const IntrinsicColumnWidth(),
+                1: const FlexColumnWidth(),
               },
               defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: [
-                TableRow(
-                  children: [
+              children: <TableRow>[
+                const TableRow(
+                  children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: EdgeInsets.only(top: 4.0),
                       child: Icon(Icons.person, size: 20),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'ชื่อ-นามสกุล:',
                         style: TextStyle(
@@ -84,32 +72,32 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   ],
                 ),
                 TableRow(
-                  children: [
-                    SizedBox(),
+                  children: <Widget>[
+                    const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                       child: Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           employeeName,
-                          style: TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
                   ],
                 ),
-                TableRow(
-                  children: [
+                const TableRow(
+                  children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: EdgeInsets.only(top: 4.0),
                       child: Icon(Icons.work, size: 20),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'ตำแหน่งงาน:',
                         style: TextStyle(
@@ -119,32 +107,32 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   ],
                 ),
                 TableRow(
-                  children: [
-                    SizedBox(),
+                  children: <Widget>[
+                    const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                       child: Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           jobPosition,
-                          style: TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
                   ],
                 ),
-                TableRow(
-                  children: [
+                const TableRow(
+                  children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: EdgeInsets.only(top: 4.0),
                       child: Icon(Icons.badge, size: 20),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'รหัสประจำตัวพนักงาน:',
                         style: TextStyle(
@@ -154,32 +142,32 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   ],
                 ),
                 TableRow(
-                  children: [
-                    SizedBox(),
+                  children: <Widget>[
+                    const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                       child: Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           employeeId,
-                          style: TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
                   ],
                 ),
-                TableRow(
-                  children: [
+                const TableRow(
+                  children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: EdgeInsets.only(top: 4.0),
                       child: Icon(Icons.email, size: 20),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'อีเมลล์:',
                         style: TextStyle(
@@ -189,32 +177,32 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   ],
                 ),
                 TableRow(
-                  children: [
-                    SizedBox(),
+                  children: <Widget>[
+                    const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                       child: Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           email,
-                          style: TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
                     ),
                   ],
                 ),
-                TableRow(
-                  children: [
+                const TableRow(
+                  children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: EdgeInsets.only(top: 4.0),
                       child: Icon(Icons.photo_camera, size: 20),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'รูปภาพ:',
                         style: TextStyle(
@@ -224,25 +212,25 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   ],
                 ),
                 TableRow(
-                  children: [
-                    SizedBox(),
+                  children: <Widget>[
+                    const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                       child: Row(
-                        children: [
+                        children: <Widget>[
                           CircleAvatar(
                             radius: 40,
                             backgroundImage: _image != null
                                 ? FileImage(_image!)
-                                : NetworkImage(
+                                : const NetworkImage(
                                         'https://via.placeholder.com/150')
                                     as ImageProvider,
                           ),
-                          SizedBox(width: 20),
+                          const SizedBox(width: 20),
                           ElevatedButton.icon(
                             onPressed: _pickImage,
-                            icon: Icon(Icons.file_upload),
-                            label: Text('เลือกไฟล์'),
+                            icon: const Icon(Icons.file_upload),
+                            label: const Text('เลือกไฟล์'),
                           ),
                         ],
                       ),
@@ -251,23 +239,23 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(width: 16),
+              children: <Widget>[
+                const SizedBox(width: 16),
                 ElevatedButton.icon(
                   onPressed: () {
                     // Save changes
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(255, 225, 225, 225),
+                    backgroundColor: const Color.fromARGB(255, 225, 225, 225),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: Icon(Icons.save),
-                  label: Text('บันทึก'),
+                  icon: const Icon(Icons.save),
+                  label: const Text('บันทึก'),
                 ),
               ],
             ),
