@@ -24,16 +24,13 @@ analyzer:
     # every member in every test, assert, etc, when we or the Dart SDK deprecates
     # something (https://github.com/flutter/flutter/issues/143312)
     avoid_dynamic_calls: ignore
-    avoid_print: ignore
     deprecated_member_use: ignore
     deprecated_member_use_from_same_package: ignore
-    # exclude:    library_private_types_in_public_api: ignore
-#  exclude:
-#    - "bin/cache/**"
+  exclude:
+    - "bin/cache/**"
       # Ignore protoc generated files
-#    - "dev/conductor/lib/proto/*"
-  
-                        
+    - "dev/conductor/lib/proto/*"
+         
 linter:
   rules:
     # This list is derived from the list of all available lints located at

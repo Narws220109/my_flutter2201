@@ -1,10 +1,11 @@
-// ignore_for_file: avoid_redundant_argument_values, prefer_const_constructors, prefer_final_locals, use_build_context_synchronously, always_specify_types, sort_constructors_first, use_key_in_widget_constructors
+// ignore_for_file: avoid_redundant_argument_values, prefer_const_constructors, prefer_final_locals, use_build_context_synchronously, always_specify_types, sort_constructors_first, use_key_in_widget_constructors, unused_field, inference_failure_on_instance_creation, unused_import
 
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 // ignore: directives_ordering, depend_on_referenced_packages
 import 'package:path/path.dart';
 import 'HomePage.dart'; // นำเข้าไฟล์ HomePage.dart
+import 'database_helper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,21 +47,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initDatabase() async {
+    String path = join(await getDatabasesPath(), 'employee_database.db');
     database = await openDatabase(
-      join(await getDatabasesPath(), 'employee_database.db'),
+      path,
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE employees(id TEXT PRIMARY KEY, password TEXT)',
+          'CREATE TABLE employees(id TEXT PRIMARY KEY, name TEXT, phone TEXT, password TEXT)',
         );
       },
       version: 1,
     );
   }
 
-  Future<void> insertEmployee(String id, String password) async {
+  Future<void> insertEmployee(
+      String id, String name, String phone, String password) async {
     await database.insert(
       'employees',
-      {'id': id, 'password': password},
+      {'id': id, 'name': name, 'phone': phone, 'password': password},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -94,10 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             Image.asset(
-              'assets/welcome.jpg',
-              width: double.infinity,
-              height: 200.0,
-              fit: BoxFit.cover,
+              'assets/images/welcome.jpg',
             ),
             const SizedBox(height: 20.0),
             const Text(
@@ -174,13 +174,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('ไม่พบผู้ใช้งาน')),
                       );
-                      // ลบข้อมูลที่กรอก
                       _idController.clear();
                       _passwordController.clear();
-                      // นำไปยังหน้าสมัครสมาชิก
                       Navigator.push(
                         context,
-                        // ignore: inference_failure_on_instance_creation
                         MaterialPageRoute(
                             builder: (context) =>
                                 RegistrationPage(database: database)),
@@ -192,7 +189,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         );
                         Navigator.push(
                           context,
-                          // ignore: inference_failure_on_instance_creation
                           MaterialPageRoute(builder: (context) => HomePage()),
                         );
                       } else {
@@ -209,7 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      // ignore: inference_failure_on_instance_creation
                       MaterialPageRoute(
                           builder: (context) =>
                               RegistrationPage(database: database)),
@@ -233,11 +228,19 @@ class RegistrationPage extends StatelessWidget {
 
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
-  Future<void> insertEmployee(String id, String password) async {
+  Future<void> insertEmployee(
+      String id, String password, String name, String phone) async {
     await database.insert(
       'employees',
-      {'id': id, 'password': password},
+      {
+        'id': id,
+        'password': password,
+        'name': name,
+        'phone': phone,
+      },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -246,7 +249,7 @@ class RegistrationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('สมัครสมาชิก'),
+        title: const Text('สมัครสมาชิก'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -256,6 +259,28 @@ class RegistrationPage extends StatelessWidget {
               controller: _idController,
               decoration: InputDecoration(
                 labelText: 'รหัสประจำตัวพนักงาน',
+                border: UnderlineInputBorder(),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'ชื่อผู้ใช้',
+                border: UnderlineInputBorder(),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            TextField(
+              controller: _phoneController,
+              decoration: InputDecoration(
+                labelText: 'เบอร์โทร',
                 border: UnderlineInputBorder(),
                 focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.black),
@@ -279,15 +304,20 @@ class RegistrationPage extends StatelessWidget {
               onPressed: () async {
                 String id = _idController.text;
                 String password = _passwordController.text;
+                String name = _nameController.text;
+                String phone = _phoneController.text;
 
-                if (id.isEmpty || password.isEmpty) {
+                if (id.isEmpty ||
+                    password.isEmpty ||
+                    name.isEmpty ||
+                    phone.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('กรุณากรอกข้อมูลให้ครบถ้วน')),
                   );
                   return;
                 }
 
-                await insertEmployee(id, password);
+                await insertEmployee(id, password, name, phone);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('ลงทะเบียนสำเร็จ')),
                 );

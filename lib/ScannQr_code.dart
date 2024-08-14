@@ -37,7 +37,7 @@ class _QRScanScreenState extends State<QRScanScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Code Scanner'),
+        title: const Text('Scan QR Code '),
         actions: <Widget>[
           IconButton(
             icon: ValueListenableBuilder(

@@ -59,6 +59,13 @@ class MainMenuScreen extends StatelessWidget {
                   },
                 ),
                 _buildMenuItem(
+                  icon: Icons.settings,
+                  title: 'แสดงน้ำหนัก',
+                  onTap: () {
+                    // clf'ohesoyd
+                  },
+                ),
+                _buildMenuItem(
                   icon: Icons.people,
                   title: 'เมนูจัดการพนักงาน',
                   onTap: () {

@@ -1,8 +1,11 @@
-// ignore_for_file: file_names
+// ignore_for_file: file_names, directives_ordering, unused_import, duplicate_ignore, duplicate_import
 import 'package:flutter/material.dart';
 // ignore: unused_import
+import 'DataPage.dart';
 import 'QRScanScreen.dart';
 import 'ScannQr_code.dart'; // นำเข้าไฟล์ QRScanScreen
+import 'Manage_employees.dart'; // เพิ่มการนำเข้าหน้า EmployeeManagementPage
+import 'DataPage.dart'; // เพิ่มการนำเข้าหน้า DataPage
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -61,17 +64,38 @@ class HomePage extends StatelessWidget {
                   },
                 ),
                 _buildMenuItem(
-                  icon: Icons.settings,
-                  title: 'เมนูตั้งค่า',
+                  icon: Icons.people,
+                  title: 'เมนูจัดการพนักงาน',
                   onTap: () {
-                    // เมนูตั้งค่า
+                    Navigator.push(
+                      context,
+                      // ignore: inference_failure_on_instance_creation, always_specify_types
+                      MaterialPageRoute(
+                        builder: (BuildContext context) =>
+                            const EmployeeManagementPage(
+                          loggedInUserId: '',
+                        ),
+                      ),
+                    );
                   },
                 ),
                 _buildMenuItem(
                   icon: Icons.people,
-                  title: 'เมนูจัดการพนักงาน',
+                  title: 'แสดงน้ำหนัก',
                   onTap: () {
-                    // เมนูจัดการพนักงาน
+                    Navigator.push(
+                      context,
+                      // ignore: inference_failure_on_instance_creation, always_specify_types
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => const DataPage()),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.settings,
+                  title: 'เมนูตั้งค่า',
+                  onTap: () {
+                    // เมนูตั้งค่า
                   },
                 ),
               ],
