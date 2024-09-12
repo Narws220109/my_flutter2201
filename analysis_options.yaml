@@ -24,8 +24,16 @@ analyzer:
     # every member in every test, assert, etc, when we or the Dart SDK deprecates
     # something (https://github.com/flutter/flutter/issues/143312)
     avoid_dynamic_calls: ignore
+    depend_on_referenced_packages: ignore
     deprecated_member_use: ignore
     deprecated_member_use_from_same_package: ignore
+    directives_ordering: ignore 
+    file_names: ignore
+    inference_failure_on_instance_creation: ignore
+    library_private_types_in_public_api: ignore
+    unused_field: ignore
+    unused_import: ignore
+    use_build_context_synchronously: ignore
   exclude:
     - "bin/cache/**"
       # Ignore protoc generated files

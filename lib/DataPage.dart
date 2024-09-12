@@ -1,16 +1,14 @@
-// ignore_for_file: unused_import, file_names, avoid_print, prefer_final_locals
+// ignore_for_file: unused_import, file_names, library_private_types_in_public_api, avoid_print, prefer_final_locals, always_specify_types
 
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:http_server/http_server.dart';
 
 class DataPage extends StatefulWidget {
   const DataPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _DataPageState createState() => _DataPageState();
 }
 
@@ -31,19 +29,34 @@ class _DataPageState extends State<DataPage> {
     _server.listen((HttpRequest request) async {
       if (request.uri.path == '/update-angle' && request.method == 'POST') {
         String content = await utf8.decoder.bind(request).join();
-        Map<String, String> data = Uri.splitQueryString(content);
+        Map<String, dynamic> data;
 
-        if (data.containsKey('angle')) {
-          setState(() {
-            _angle = double.parse(data['angle']!);
-            print('Received angle: $_angle');
-          });
+        try {
+          data = jsonDecode(content) as Map<String, dynamic>;
+
+          if (data.containsKey('angle')) {
+            var angleValue = data['angle'];
+            if (angleValue is num) {
+              setState(() {
+                _angle = angleValue.toDouble();
+                print('Received angle: $_angle');
+              });
+            } else {
+              print('Angle value is not a number');
+            }
+          }
+
+          request.response
+            ..statusCode = 200
+            ..write('Angle updated successfully')
+            ..close();
+        } catch (e) {
+          print('Error parsing JSON: $e');
+          request.response
+            ..statusCode = 400
+            ..write('Invalid JSON')
+            ..close();
         }
-
-        request.response
-          ..statusCode = 200
-          ..write('Angle updated successfully')
-          ..close();
       } else {
         request.response
           ..statusCode = 404

@@ -1,15 +1,12 @@
-// ignore: duplicate_ignore
-// ignore: file_names
-
-// ignore_for_file: library_private_types_in_public_api, file_names, inference_failure_on_function_invocation, sized_box_for_whitespace, always_specify_types
+// ignore_for_file: inference_failure_on_function_invocation, sort_constructors_first
 
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:qr_flutter/qr_flutter.dart'; // Import สำหรับ QR Code
 import 'database_helper.dart';
 
 class EmployeeManagementPage extends StatefulWidget {
   final String loggedInUserId;
-  // ignore: sort_constructors_first
   const EmployeeManagementPage({super.key, required this.loggedInUserId});
 
   @override
@@ -53,14 +50,14 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
   }
 
   Future<void> _insertEmployee(
-      String id, String name, String phone, String position) async {
+      String id, String name, String phone, String password) async {
     await _database.insert(
       'employees',
       <String, Object?>{
         'id': id,
         'name': name,
         'phone': phone,
-        'position': position
+        'password': password,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -68,14 +65,42 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
   }
 
   Future<void> _updateEmployee(
-      String id, String name, String phone, String position) async {
+      String id, String name, String phone, String password) async {
     await _database.update(
       'employees',
-      <String, Object?>{'name': name, 'phone': phone, 'position': position},
+      <String, Object?>{'name': name, 'phone': phone, 'password': password},
       where: 'id = ?',
       whereArgs: <Object?>[id],
     );
     _fetchEmployees();
+  }
+
+  // เพิ่มฟังก์ชันยืนยันการลบพนักงาน
+  Future<void> _confirmDeleteEmployee(String id) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('ยืนยันการลบ'),
+          content: const Text('คุณแน่ใจหรือว่าต้องการลบพนักงานคนนี้?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('ยกเลิก'),
+              onPressed: () {
+                Navigator.of(context).pop(); // ปิด Dialog และไม่ลบข้อมูล
+              },
+            ),
+            ElevatedButton(
+              child: const Text('ยืนยัน'),
+              onPressed: () {
+                _deleteEmployee(id); // ลบข้อมูลพนักงาน
+                Navigator.of(context).pop(); // ปิด Dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _deleteEmployee(String id) async {
@@ -91,7 +116,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     final TextEditingController idController = TextEditingController();
     final TextEditingController nameController = TextEditingController();
     final TextEditingController phoneController = TextEditingController();
-    final TextEditingController positionController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
     showDialog(
       context: context,
@@ -115,8 +140,9 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 decoration: const InputDecoration(labelText: 'เบอร์โทร'),
               ),
               TextField(
-                controller: positionController,
-                decoration: const InputDecoration(labelText: 'ตำแหน่งงาน'),
+                controller: passwordController,
+                decoration: const InputDecoration(labelText: 'รหัสผ่าน'),
+                obscureText: true,
               ),
             ],
           ),
@@ -133,13 +159,13 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 final String id = idController.text;
                 final String name = nameController.text;
                 final String phone = phoneController.text;
-                final String position = positionController.text;
+                final String password = passwordController.text;
 
                 if (id.isNotEmpty &&
                     name.isNotEmpty &&
                     phone.isNotEmpty &&
-                    position.isNotEmpty) {
-                  _insertEmployee(id, name, phone, position);
+                    password.isNotEmpty) {
+                  _insertEmployee(id, name, phone, password);
                   Navigator.of(context).pop(); // ปิด Dialog
                 }
               },
@@ -157,8 +183,8 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
         TextEditingController(text: employee['name']?.toString() ?? '');
     final TextEditingController phoneController =
         TextEditingController(text: employee['phone']?.toString() ?? '');
-    final TextEditingController positionController =
-        TextEditingController(text: employee['position']?.toString() ?? '');
+    final TextEditingController passwordController =
+        TextEditingController(text: employee['password']?.toString() ?? '');
 
     showDialog(
       context: context,
@@ -183,8 +209,9 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 decoration: const InputDecoration(labelText: 'เบอร์โทร'),
               ),
               TextField(
-                controller: positionController,
-                decoration: const InputDecoration(labelText: 'ตำแหน่งงาน'),
+                controller: passwordController,
+                decoration: const InputDecoration(labelText: 'รหัสผ่าน'),
+                obscureText: true,
               ),
             ],
           ),
@@ -201,16 +228,64 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 final String id = idController.text;
                 final String name = nameController.text;
                 final String phone = phoneController.text;
-                final String position = positionController.text;
+                final String password = passwordController.text;
 
                 if (id.isNotEmpty &&
                     name.isNotEmpty &&
                     phone.isNotEmpty &&
-                    position.isNotEmpty) {
-                  _updateEmployee(id, name, phone, position);
+                    password.isNotEmpty) {
+                  _updateEmployee(id, name, phone, password);
                   Navigator.of(context)
                       .pop(); // ปิด Dialog และกลับไปที่หน้าหลัก
                 }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ฟังก์ชันสร้าง QR Code สำหรับพนักงาน
+  void _generateQRCode(Map<String, dynamic> employee) {
+    final String qrData =
+        'ID: ${employee['id']}\nName: ${employee['name']}\nPhone: ${employee['phone']}';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('QR Code พนักงาน'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              // ใช้ Row สำหรับจัดตำแหน่ง QR Code ให้อยู่ตรงกลาง
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.center, // ทำให้ QR Code อยู่ตรงกลาง
+                children: <Widget>[
+                  SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: QrImageView(
+                      data: qrData,
+                      size: 200.0,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // จัดข้อมูลให้อยู่ชิดซ้าย
+              Align(
+                alignment: Alignment.centerLeft, // จัดข้อมูลให้อยู่ชิดซ้าย
+                child: Text('ข้อมูล\n$qrData'),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('ปิด'),
+              onPressed: () {
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -237,119 +312,73 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          children: <Widget>[
-            if (_loggedInUser != null) ...<Widget>[
-              Container(
-                padding: const EdgeInsets.all(10.0),
-                color: Colors.grey[200],
-                child: Row(
+      body: Container(
+        // เพิ่ม background image
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: ListView.builder(
+          itemCount: _employees.length,
+          itemBuilder: (BuildContext context, int index) {
+            final Map<String, dynamic> employee = _employees[index];
+            return Card(
+              // เปลี่ยนสีกรอบของ Card
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(
+                  color: Color.fromARGB(255, 255, 255, 255),
+                  width: 0.0,
+                ), // กำหนดสีและความหนาของกรอบ
+                borderRadius:
+                    BorderRadius.circular(10.0), // กำหนดขอบมุมของการ์ด
+              ),
+              color: const Color.fromARGB(228, 255, 255, 255)
+                  .withOpacity(0.7), // เปลี่ยนสีพื้นหลังภายในกรอบ
+              child: ListTile(
+                // ใช้ Column เพื่อจัดชื่อและ ID ให้อยู่คนละบรรทัด
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Icon(Icons.person, size: 40),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'ข้อมูลของคุณ: ${_loggedInUser!['name'] ?? 'ไม่มีชื่อ'}, เบอร์โทร: ${_loggedInUser!['phone'] ?? 'ไม่มีเบอร์โทร'}, ตำแหน่งงาน: ${_loggedInUser!['position'] ?? 'ไม่มีตำแหน่ง'}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                    Text(
+                      employee['name']?.toString() ?? '',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    Text(
+                      'รหัส: ${employee['id']?.toString() ?? ''}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+                subtitle: Text('เบอร์โทร: ${employee['phone']}'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      icon: const Icon(Icons.qr_code, color: Colors.green),
+                      onPressed: () {
+                        _generateQRCode(employee);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () {
+                        _showEditEmployeeDialog(employee);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _confirmDeleteEmployee(
+                            employee['id']?.toString() ?? '');
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-            ],
-            Expanded(
-              child: _employees.isEmpty
-                  ? const Center(
-                      child: Text('ไม่มีพนักงาน'),
-                    )
-                  : ListView.builder(
-                      itemCount: _employees.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final Map<String, dynamic> employee = _employees[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 7.0),
-                          child: ListTile(
-                            leading: const CircleAvatar(
-                              radius: 20,
-                              backgroundImage: NetworkImage(
-                                  'https://via.placeholder.com/150'),
-                            ),
-                            title: Text(
-                              (employee['name'] as String?) ?? 'ไม่มีชื่อ',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ตำแหน่งงาน: ${employee['position'] ?? 'ไม่มี'}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                Text(
-                                  'เบอร์โทร: ${employee['phone'] ?? 'ไม่มีเบอร์โทร'}',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
-                            ),
-                            trailing: Container(
-                              width: 100,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: <Widget>[
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.blue),
-                                    iconSize: 21,
-                                    onPressed: () =>
-                                        _showEditEmployeeDialog(employee),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    iconSize: 21,
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text('ลบพนักงาน'),
-                                            content: const Text(
-                                                'คุณแน่ใจหรือไม่ว่าต้องการลบพนักงานนี้?'),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: const Text('ยกเลิก'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                              ElevatedButton(
-                                                child: const Text('ลบ'),
-                                                onPressed: () {
-                                                  _deleteEmployee(employee['id']
-                                                      .toString());
-
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

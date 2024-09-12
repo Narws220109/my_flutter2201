@@ -1,13 +1,14 @@
-// ignore_for_file: file_names, inference_failure_on_function_invocation, always_specify_types, avoid_redundant_argument_values
-import 'dart:typed_data' show Uint8List;
+// ignore_for_file: always_specify_types, avoid_redundant_argument_values
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'QRResultScreen.dart';
+import 'database_helper.dart';
 
 class QRScanScreen extends StatefulWidget {
   const QRScanScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _QRScanScreenState createState() => _QRScanScreenState();
 }
 
@@ -37,7 +38,7 @@ class _QRScanScreenState extends State<QRScanScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code '),
+        title: const Text('Scan QR Code'),
         actions: <Widget>[
           IconButton(
             icon: ValueListenableBuilder(
@@ -70,43 +71,55 @@ class _QRScanScreenState extends State<QRScanScreen>
         children: <Widget>[
           MobileScanner(
             controller: _controller,
-            onDetect: (BarcodeCapture capture) {
+            onDetect: (BarcodeCapture capture) async {
               try {
                 final List<Barcode> barcodes = capture.barcodes;
-                final Uint8List? image = capture.image;
 
-                if (barcodes.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No barcodes found')),
-                  );
-                } else {
-                  for (final Barcode barcode in barcodes) {
-                    final String barcodeValue = barcode.rawValue ?? 'Unknown';
-                    if (_scannedData != barcodeValue) {
-                      setState(() {
-                        _scannedData = barcodeValue;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Barcode found: $barcodeValue')),
-                      );
-                      debugPrint('Barcode found! $barcodeValue');
-                    }
-                  }
-                }
+                for (final Barcode barcode in barcodes) {
+                  final String barcodeValue = barcode.rawValue ?? 'Unknown';
+                  if (_scannedData != barcodeValue) {
+                    setState(() {
+                      _scannedData = barcodeValue;
+                    });
 
-                if (image != null) {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) => AlertDialog(
-                      content: Image.memory(image),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Close'),
+                    // Save the scanned data to the local database
+                    final DateTime scanDateTime = DateTime.now();
+                    await DatabaseHelper.instance.insertScanData(
+                      barcodeValue,
+                      '', // Assuming you want to save barcodeValue itself, adjust if necessary
+                      '', // You can add other fields as necessary
+                      scanDateTime,
+                    );
+
+                    // Split the barcodeValue to extract the necessary fields
+                    final List<String> dataParts = barcodeValue.split(',');
+                    final String employeeId =
+                        dataParts.isNotEmpty ? dataParts[0] : 'Unknown';
+                    final String fullName =
+                        dataParts.length > 1 ? dataParts[1] : 'Unknown';
+                    final String phoneNumber =
+                        dataParts.length > 2 ? dataParts[2] : 'Unknown';
+                    final String weight =
+                        dataParts.length > 3 ? dataParts[3] : 'Unknown';
+
+                    // Navigate to QRResultScreen with the scanned data
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QRResultScreen(
+                          employeeId: barcodeValue, // หรือค่าเริ่มต้น
+                          fullName: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          weight: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          scanDateTime: DateTime.now(),
+                          phoneNumber: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          stableWeight:
+                              '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          barcodeValue: barcodeValue,
                         ),
-                      ],
-                    ),
-                  );
+                      ),
+                    );
+                    break; // Break the loop after the first successful scan
+                  }
                 }
               } catch (e) {
                 debugPrint('Error: $e');

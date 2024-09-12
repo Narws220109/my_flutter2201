@@ -1,10 +1,10 @@
-// ignore_for_file: file_names
+// ignore_for_file: file_names, avoid_field_initializers_in_const_classes
 
 import 'package:flutter/material.dart';
-//import 'package:qr_flutter/qr_flutter.dart';
 
-// ignore: use_key_in_widget_constructors
 class WeightMeasurementScreen extends StatelessWidget {
+  const WeightMeasurementScreen({super.key});
+
   final String employeeId = '123456';
   final String employeeName = 'John Doe';
   final String weight = '70.5 kg';

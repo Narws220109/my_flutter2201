@@ -1,14 +1,26 @@
-// ignore_for_file: file_names, directives_ordering, unused_import, duplicate_ignore, duplicate_import
+// ignore_for_file: file_names, directives_ordering, unused_import, duplicate_ignore, duplicate_import, sort_constructors_first, always_specify_types, avoid_redundant_argument_values
 import 'package:flutter/material.dart';
 // ignore: unused_import
 import 'DataPage.dart';
 import 'QRScanScreen.dart';
 import 'ScannQr_code.dart'; // นำเข้าไฟล์ QRScanScreen
 import 'Manage_employees.dart'; // เพิ่มการนำเข้าหน้า EmployeeManagementPage
-import 'DataPage.dart'; // เพิ่มการนำเข้าหน้า DataPage
+import 'BluetoothData.dart'; // เพิ่มการนำเข้าหน้า BluetoothData
+import 'QrCodePrinter.dart'; // เพิ่มการนำเข้าหน้า QrCodePrinter
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final String name;
+  final String employeeId;
+  final String phoneNumber;
+  final String imageUrl;
+
+  const HomePage({
+    super.key,
+    required this.name,
+    required this.employeeId,
+    required this.phoneNumber,
+    required this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +43,11 @@ class HomePage extends StatelessWidget {
         children: <Widget>[
           const SizedBox(height: 20.0),
           _buildUserInfo(
-            name: 'John Doe',
-            employeeId: '12345',
-            phoneNumber: '081-234-5678',
-            imageUrl:
-                'https://example.com/avatar.jpg', // URL ของรูปภาพที่ต้องการแสดง
+            name: name,
+            employeeId: employeeId,
+            phoneNumber: phoneNumber,
+            imageUrl: imageUrl,
           ),
-          const SizedBox(height: 20.0),
           const SizedBox(height: 20.0),
           Expanded(
             child: ListView(
@@ -56,10 +66,9 @@ class HomePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      // ignore: inference_failure_on_instance_creation, always_specify_types
                       MaterialPageRoute(
                           builder: (BuildContext context) =>
-                              const QRScanScreen()),
+                              const QRScanScreen()), 
                     );
                   },
                 ),
@@ -69,25 +78,37 @@ class HomePage extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      // ignore: inference_failure_on_instance_creation, always_specify_types
                       MaterialPageRoute(
                         builder: (BuildContext context) =>
                             const EmployeeManagementPage(
-                          loggedInUserId: '',
+                          loggedInUserId:
+                              '', // คุณอาจจะต้องส่ง ID ผู้ใช้ที่ล็อกอิน
                         ),
                       ),
                     );
                   },
                 ),
                 _buildMenuItem(
-                  icon: Icons.people,
+                  icon: Icons.scale,
                   title: 'แสดงน้ำหนัก',
                   onTap: () {
                     Navigator.push(
                       context,
-                      // ignore: inference_failure_on_instance_creation, always_specify_types
                       MaterialPageRoute(
-                          builder: (BuildContext context) => const DataPage()),
+                          builder: (BuildContext context) =>
+                              const BluetoothPage()),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.qr_code,
+                  title: 'สร้าง QR Code',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) =>
+                              const QrCodePrinterPage()),
                     );
                   },
                 ),
@@ -115,13 +136,11 @@ class HomePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        // ignore: avoid_redundant_argument_values
         border: Border.all(color: const Color.fromARGB(255, 0, 0, 0)),
         borderRadius: BorderRadius.circular(10.0),
       ),
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
       child: Row(
-        // ignore: avoid_redundant_argument_values
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           CircleAvatar(
