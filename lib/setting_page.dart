@@ -28,16 +28,21 @@ class SettingsPage extends StatelessWidget {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage:
-                        NetworkImage('https://via.placeholder.com/150'),
-                  ),
-                  SizedBox(width: 10),
-                  Column(
+                  margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        CircleAvatar(
+          radius: 35.0,
+          backgroundColor: Colors.grey[300], // สีพื้นหลังสำหรับไอคอน
+          child: const Icon(
+            Icons.person,
+            size: 50.0, // ขนาดไอคอน
+            color: Colors.grey, // สีของไอคอน
+          ),
+        ),
+                  const SizedBox(width: 10),
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(

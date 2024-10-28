@@ -8,11 +8,6 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
   static Database? _database;
 
-  Future<void> deleteDatabaseFile() async {
-    final String path = join(await getDatabasesPath(), 'employee_database.db');
-    await deleteDatabase(path); // ลบไฟล์ฐานข้อมูล
-  }
-
   Future<Database> get database async {
     _database ??= await _initDatabase();
     return _database!;
@@ -23,15 +18,20 @@ class DatabaseHelper {
     return openDatabase(
       path,
       onCreate: (Database db, int version) async {
-        // สร้างตารางใหม่เมื่อตารางยังไม่มี
+        // สร้างตารางที่มีอยู่
         await db.execute(
           'CREATE TABLE employees(id TEXT PRIMARY KEY, name TEXT, phone TEXT, password TEXT)',
         );
         await db.execute(
           'CREATE TABLE scan_data(employeeId TEXT PRIMARY KEY, fullName TEXT, weight TEXT, scanDateTime TEXT)',
         );
+
+        // สร้างตารางใหม่
+        await db.execute(
+          'CREATE TABLE new_table(id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, createdAt TEXT)',
+        );
       },
-      version: 3, // ระบุเวอร์ชันของฐานข้อมูล
+      version: 4, // อัปเดตเวอร์ชันฐานข้อมูล
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
           // ตรวจสอบว่าตาราง `employees` มีคอลัมน์ `password` หรือไม่
@@ -60,6 +60,20 @@ class DatabaseHelper {
             // สร้างตาราง `scan_data` ถ้ายังไม่มี
             await db.execute(
               'CREATE TABLE scan_data(employeeId TEXT PRIMARY KEY, fullName TEXT, weight TEXT, scanDateTime TEXT)',
+            );
+          }
+        }
+
+        if (oldVersion < 4) {
+          // ตรวจสอบและสร้างตารางใหม่ถ้ายังไม่มี
+          final List<Map<String, dynamic>> tables = await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='new_table'",
+          );
+
+          if (tables.isEmpty) {
+            // สร้างตาราง `new_table` ถ้ายังไม่มี
+            await db.execute(
+              'CREATE TABLE new_table(id INTEGER PRIMARY KEY AUTOINCREMENT, description TEXT, createdAt TEXT)',
             );
           }
         }
@@ -156,5 +170,61 @@ class DatabaseHelper {
     } else {
       return null;
     }
+  }
+
+  // New methods for managing new_table
+  Future<void> insertNewData(String description, DateTime createdAt) async {
+    final Database db = await database;
+    await db.insert(
+      'new_table',
+      <String, Object?>{
+        'description': description,
+        'createdAt': createdAt.toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllNewData() async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('new_table');
+    return maps;
+  }
+
+  Future<Map<String, dynamic>?> getNewDataById(int id) async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'new_table',
+      where: 'id = ?',
+      whereArgs: <Object?>[id],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    } else {
+      return null;
+    }
+  }
+
+  Future<void> updateNewData(
+      int id, String description, DateTime createdAt) async {
+    final Database db = await database;
+    await db.update(
+      'new_table',
+      <String, Object?>{
+        'description': description,
+        'createdAt': createdAt.toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: <Object?>[id],
+    );
+  }
+
+  Future<void> deleteNewData(int id) async {
+    final Database db = await database;
+    await db.delete(
+      'new_table',
+      where: 'id = ?',
+      whereArgs: <Object?>[id],
+    );
   }
 }

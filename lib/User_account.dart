@@ -1,225 +1,102 @@
-// ignore_for_file: file_names, directives_ordering
-import 'package:flutter/material.dart';
-// ignore: depend_on_referenced_packages
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+// ignore_for_file: unused_element
 
-// ignore: use_key_in_widget_constructors
-class AccountManagementPage extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'database_helper.dart';
+import 'Login.dart';
+
+class Setting extends StatefulWidget {
+  final String loggedInUserId;
+  final String name;
+  final String phoneNumber;
+
+  const Setting({
+    super.key,
+    required this.loggedInUserId,
+    required this.name,
+    required this.phoneNumber,
+  });
+
   @override
-  // ignore: library_private_types_in_public_api
-  _AccountManagementPageState createState() => _AccountManagementPageState();
+  _SettingState createState() => _SettingState();
 }
 
-class _AccountManagementPageState extends State<AccountManagementPage> {
-  File? _image;
+class _SettingState extends State<Setting> {
+  late Database _database;
+  Map<String, dynamic>? _loggedInUser;
+  bool _isDarkTheme = false; // สถานะของธีม
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile =
-        await picker.pickImage(source: ImageSource.gallery);
+  @override
+  void initState() {
+    super.initState();
+    _initializeDatabase();
+  }
 
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
+  Future<void> _initializeDatabase() async {
+    _database = await DatabaseHelper.instance.database;
+    _fetchLoggedInUser();
+  }
+
+  Future<void> _fetchLoggedInUser() async {
+    setState(() {
+      _loggedInUser = {
+        'name': widget.name,
+        'phone': widget.phoneNumber,
+        'id': widget.loggedInUserId,
+      };
+    });
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkTheme = !_isDarkTheme;
+    });
+  }
+
+  Widget _buildInfoCard(IconData icon, String title, String value) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        subtitle: Text(value),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('การจัดการบัญชีผู้ใช้'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        title: const Text('แสดงข้อมูลพนักงาน'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const MyHomePage(title: 'Login'),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Center(
-              child: Text(
-                'การจัดการบัญชีผู้ใช้',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: Table(
-                // ignore: prefer_const_literals_to_create_immutables
-                columnWidths: <int, TableColumnWidth>{
-                  0: const IntrinsicColumnWidth(),
-                  1: const FlexColumnWidth(),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: <TableRow>[
-                  const TableRow(
-                    children: <Widget>[
-                      Icon(Icons.person, size: 25),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'ชื่อ-นามสกุล:',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      SizedBox(),
-                      Padding(
-                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'การแก้ไขชื่อ-นามสกุล',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      Icon(Icons.work, size: 25),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'ตำแหน่งงาน:',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      SizedBox(),
-                      Padding(
-                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'แสดงตำแหน่งงาน',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      Icon(Icons.badge, size: 25),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'รหัสประจำตัวพนักงาน:',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      SizedBox(),
-                      Padding(
-                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'แสดงรหัสประจำตัวพนักงาน',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      Icon(Icons.email, size: 25),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'อีเมลล์:',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      SizedBox(),
-                      Padding(
-                        padding: EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'แก้ไขอีเมลล์',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const TableRow(
-                    children: <Widget>[
-                      Icon(Icons.photo_camera, size: 25),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'รูปภาพ:',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  TableRow(
-                    children: <Widget>[
-                      const SizedBox(),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        child: Row(
-                          children: <Widget>[
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundImage: _image != null
-                                  ? FileImage(_image!)
-                                  : const NetworkImage(
-                                          'https://via.placeholder.com/150')
-                                      as ImageProvider,
-                            ),
-                            const SizedBox(width: 20),
-                            ElevatedButton.icon(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.file_upload),
-                              label: const Text('เลือกไฟล์'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+        padding: const EdgeInsets.all(16.0),
+        child: _loggedInUser == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: <Widget>[
+                  const SizedBox(height: 20),
+                  _buildInfoCard(Icons.badge, 'รหัสประจำตัว',
+                      _loggedInUser!['id'].toString()),
+                  _buildInfoCard(Icons.person, 'ชื่อ-นามสกุล',
+                      _loggedInUser!['name'].toString()),
+                  _buildInfoCard(Icons.phone, 'เบอร์โทร',
+                      _loggedInUser!['phone'].toString()),
+                  const SizedBox(height: 20),
                 ],
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Save changes
-                },
-                child: const Text('บันทึก'),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

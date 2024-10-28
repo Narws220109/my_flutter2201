@@ -1,8 +1,9 @@
-// ignore_for_file: inference_failure_on_function_invocation, sort_constructors_first
+// ignore_for_file: inference_failure_on_function_invocation, sort_constructors_first, avoid_void_async
 
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:qr_flutter/qr_flutter.dart'; // Import สำหรับ QR Code
+import 'package:blue_thermal_printer/blue_thermal_printer.dart'; // Import สำหรับ Bluetooth Printer
 import 'database_helper.dart';
 
 class EmployeeManagementPage extends StatefulWidget {
@@ -17,11 +18,16 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
   late Database _database;
   List<Map<String, dynamic>> _employees = <Map<String, dynamic>>[];
   Map<String, dynamic>? _loggedInUser;
+  BlueThermalPrinter bluetooth =
+      BlueThermalPrinter.instance; // Bluetooth Printer Instance
+  List<BluetoothDevice> _devices = [];
+  BluetoothDevice? _selectedDevice;
 
   @override
   void initState() {
     super.initState();
     _initializeDatabase();
+    _getBluetoothDevices(); // เพิ่มการเชื่อมต่อ Bluetooth Printer
   }
 
   Future<void> _initializeDatabase() async {
@@ -75,7 +81,6 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     _fetchEmployees();
   }
 
-  // เพิ่มฟังก์ชันยืนยันการลบพนักงาน
   Future<void> _confirmDeleteEmployee(String id) async {
     showDialog(
       context: context,
@@ -246,10 +251,11 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     );
   }
 
-  // ฟังก์ชันสร้าง QR Code สำหรับพนักงาน
+  // ฟังก์ชันสร้าง QR Code และพิมพ์ด้วย Bluetooth Printer
   void _generateQRCode(Map<String, dynamic> employee) {
     final String qrData =
-        'ID: ${employee['id']}\nName: ${employee['name']}\nPhone: ${employee['phone']}';
+        'รหัสประจำตัวพนักงาน: ${employee['id']},\nชื่อพนักงาน: ${employee['name']},\nเบอร์โทร: ${employee['phone']}';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -258,10 +264,8 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              // ใช้ Row สำหรับจัดตำแหน่ง QR Code ให้อยู่ตรงกลาง
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // ทำให้ QR Code อยู่ตรงกลาง
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(
                     width: 200,
@@ -274,14 +278,20 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              // จัดข้อมูลให้อยู่ชิดซ้าย
               Align(
-                alignment: Alignment.centerLeft, // จัดข้อมูลให้อยู่ชิดซ้าย
+                alignment: Alignment.centerLeft,
                 child: Text('ข้อมูล\n$qrData'),
               ),
             ],
           ),
           actions: <Widget>[
+            ElevatedButton(
+              child: const Text('พิมพ์ QR Code'),
+              onPressed: () {
+                _printQRCode(qrData); // เรียกฟังก์ชันพิมพ์ QR Code
+                Navigator.of(context).pop();
+              },
+            ),
             TextButton(
               child: const Text('ปิด'),
               onPressed: () {
@@ -294,92 +304,115 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     );
   }
 
+  // ฟังก์ชันพิมพ์ QR Code ด้วยเครื่องพิมพ์ Bluetooth
+  void _printQRCode(String qrData) async {
+    if (_selectedDevice != null) {
+      await bluetooth.connect(_selectedDevice!);
+      bluetooth.printCustom(qrData, 0, 1); // พิมพ์ข้อมูล QR Code
+      bluetooth.printNewLine();
+      bluetooth.disconnect();
+    } else {
+      // แสดงข้อความหากไม่มีการเลือกเครื่องพิมพ์
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return const AlertDialog(
+            title: Text('ข้อผิดพลาด'),
+            content: Text('กรุณาเลือกเครื่องพิมพ์ก่อนพิมพ์ QR Code'),
+          );
+        },
+      );
+    }
+  }
+
+  // ฟังก์ชันสำหรับเชื่อมต่อ Bluetooth Printer
+  void _getBluetoothDevices() async {
+    final List<BluetoothDevice> devices = await bluetooth.getBondedDevices();
+    setState(() {
+      _devices = devices;
+    });
+  }
+
+  void _showDeviceSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('เลือกเครื่องพิมพ์'),
+          content: DropdownButton<BluetoothDevice>(
+            items: _devices
+                .map((BluetoothDevice device) =>
+                    DropdownMenuItem<BluetoothDevice>(
+                      value: device,
+                      child: Text(device.name!),
+                    ))
+                .toList(),
+            onChanged: (BluetoothDevice? value) {
+              setState(() {
+                _selectedDevice = value;
+              });
+              Navigator.of(context).pop();
+            },
+            hint: const Text('เลือกเครื่องพิมพ์'),
+            value: _selectedDevice,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('การจัดการพนักงาน'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        title: const Text('จัดการพนักงาน'),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddEmployeeDialog,
+            icon: const Icon(Icons.print),
+            onPressed: _showDeviceSelectionDialog, // เลือกเครื่องพิมพ์
           ),
         ],
       ),
-      body: Container(
-        // เพิ่ม background image
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: ListView.builder(
-          itemCount: _employees.length,
-          itemBuilder: (BuildContext context, int index) {
-            final Map<String, dynamic> employee = _employees[index];
-            return Card(
-              // เปลี่ยนสีกรอบของ Card
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(
-                  color: Color.fromARGB(255, 255, 255, 255),
-                  width: 0.0,
-                ), // กำหนดสีและความหนาของกรอบ
-                borderRadius:
-                    BorderRadius.circular(10.0), // กำหนดขอบมุมของการ์ด
-              ),
-              color: const Color.fromARGB(228, 255, 255, 255)
-                  .withOpacity(0.7), // เปลี่ยนสีพื้นหลังภายในกรอบ
-              child: ListTile(
-                // ใช้ Column เพื่อจัดชื่อและ ID ให้อยู่คนละบรรทัด
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      employee['name']?.toString() ?? '',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    Text(
-                      'รหัส: ${employee['id']?.toString() ?? ''}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
+      body: ListView.builder(
+        itemCount: _employees.length,
+        itemBuilder: (BuildContext context, int index) {
+          final Map<String, dynamic> employee = _employees[index];
+          return ListTile(
+            title: Text(employee['name']?.toString() ?? ''),
+            subtitle:
+                Text('รหัส: ${employee['id']}\nเบอร์โทร: ${employee['phone']}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.qr_code, color: Colors.green),
+                  onPressed: () {
+                    _generateQRCode(employee);
+                    // แสดง QR Code
+                  },
                 ),
-                subtitle: Text('เบอร์โทร: ${employee['phone']}'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    IconButton(
-                      icon: const Icon(Icons.qr_code, color: Colors.green),
-                      onPressed: () {
-                        _generateQRCode(employee);
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () {
-                        _showEditEmployeeDialog(employee);
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        _confirmDeleteEmployee(
-                            employee['id']?.toString() ?? '');
-                      },
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () {
+                    _showEditEmployeeDialog(employee);
+                    // แก้ไขข้อมูลพนักงาน
+                  },
                 ),
-              ),
-            );
-          },
-        ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    _confirmDeleteEmployee(employee['id'].toString());
+                    // ลบพนักงาน
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddEmployeeDialog,
+        child: const Icon(Icons.add),
       ),
     );
   }

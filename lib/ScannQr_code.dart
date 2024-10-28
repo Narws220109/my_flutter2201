@@ -1,9 +1,13 @@
-// ignore_for_file: always_specify_types, avoid_redundant_argument_values
+// ignore_for_file: sort_constructors_first, avoid_print, prefer_single_quotes
 
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:typed_data';
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'QRResultScreen.dart';
-import 'database_helper.dart';
 
 class QRScanScreen extends StatefulWidget {
   const QRScanScreen({super.key});
@@ -18,19 +22,151 @@ class _QRScanScreenState extends State<QRScanScreen>
   String? _scannedData;
   late AnimationController _animationController;
 
+  BluetoothConnection? connection;
+  String realTimeWeight = ''; // ค่าน้ำหนักแบบเรียลทาม
+  String stableWeight = ''; // ค่าน้ำหนักที่คงที่
+  bool isConnecting = true;
+  bool isConnected = false;
+  bool isDisconnected = false;
+  String errorMessage = '';
+  Timer? _updateTimer;
+  List<double> weightReadings = <double>[];
+  final int maxStableReadings = 10;
+  final double stableThreshold = 5;
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 2),
+    );
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    if (await Permission.bluetooth.isGranted &&
+        await Permission.bluetoothScan.isGranted &&
+        await Permission.bluetoothConnect.isGranted) {
+      _connectToDevice();
+    } else {
+      await <Permission>[
+        Permission.bluetooth,
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+      ].request();
+
+      if (await Permission.bluetooth.isGranted &&
+          await Permission.bluetoothScan.isGranted &&
+          await Permission.bluetoothConnect.isGranted) {
+        _connectToDevice();
+      } else {
+        setState(() {
+          isConnecting = false;
+          errorMessage =
+              "Please grant Bluetooth permissions in your device settings.";
+        });
+      }
+    }
+  }
+
+  Future<void> _connectToDevice() async {
+    final List<BluetoothDevice> devices =
+        await FlutterBluetoothSerial.instance.getBondedDevices();
+
+    BluetoothDevice? targetDevice;
+    try {
+      targetDevice = devices.firstWhere(
+          (BluetoothDevice device) => device.name == "ESP32_Bluetooth");
+    } catch (e) {
+      targetDevice = null;
+    }
+
+    if (targetDevice != null) {
+      try {
+        connection = await BluetoothConnection.toAddress(targetDevice.address);
+        setState(() {
+          isConnecting = false;
+          isConnected = true;
+        });
+
+        connection!.input!.listen((Uint8List data) {
+          final String newData = String.fromCharCodes(data).trim();
+          final double voltage = double.tryParse(newData) ?? 0;
+          final double weight = _calculateWeight(voltage);
+
+          setState(() {
+            realTimeWeight = weight.toStringAsFixed(3);
+          });
+
+          _addWeightReading(weight);
+
+          if (_updateTimer == null || !_updateTimer!.isActive) {
+            _updateTimer = Timer(const Duration(seconds: 3), () {
+              final double? averageWeight = _calculateStableWeight();
+              if (averageWeight != null) {
+                setState(() {
+                  stableWeight = averageWeight.toStringAsFixed(3);
+                });
+              }
+            });
+          }
+        }).onDone(() {
+          setState(() {
+            isConnected = false;
+            isDisconnected = true;
+          });
+          print("Disconnected");
+        });
+      } catch (e) {
+        setState(() {
+          isConnecting = false;
+          isConnected = false;
+          errorMessage = "Failed to connect: $e";
+        });
+        print("Failed to connect: $e");
+      }
+    } else {
+      setState(() {
+        isConnecting = false;
+        isConnected = false;
+        errorMessage = "Device not found!";
+      });
+      print("Device not found!");
+    }
+  }
+
+  double _calculateWeight(double voltage) {
+    return (voltage / 4095) * 60;
+  }
+
+  void _addWeightReading(double weight) {
+    if (weightReadings.length >= maxStableReadings) {
+      weightReadings.removeAt(0);
+    }
+    weightReadings.add(weight);
+  }
+
+  double? _calculateStableWeight() {
+    if (weightReadings.length < maxStableReadings) {
+      return null;
+    }
+
+    final double maxWeight = weightReadings.reduce(max);
+    final double minWeight = weightReadings.reduce(min);
+    if ((maxWeight - minWeight) <= stableThreshold) {
+      return weightReadings.reduce((a, b) => a + b) / weightReadings.length;
+    } else {
+      return null;
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _animationController.dispose();
+    _updateTimer?.cancel();
+    connection?.dispose();
     super.dispose();
   }
 
@@ -38,7 +174,7 @@ class _QRScanScreenState extends State<QRScanScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        title: const Text('สแกน QR Code'),
         actions: <Widget>[
           IconButton(
             icon: ValueListenableBuilder(
@@ -82,43 +218,31 @@ class _QRScanScreenState extends State<QRScanScreen>
                       _scannedData = barcodeValue;
                     });
 
-                    // Save the scanned data to the local database
-                    final DateTime scanDateTime = DateTime.now();
-                    await DatabaseHelper.instance.insertScanData(
-                      barcodeValue,
-                      '', // Assuming you want to save barcodeValue itself, adjust if necessary
-                      '', // You can add other fields as necessary
-                      scanDateTime,
-                    );
-
-                    // Split the barcodeValue to extract the necessary fields
                     final List<String> dataParts = barcodeValue.split(',');
-                    final String employeeId =
-                        dataParts.isNotEmpty ? dataParts[0] : 'Unknown';
-                    final String fullName =
-                        dataParts.length > 1 ? dataParts[1] : 'Unknown';
-                    final String phoneNumber =
-                        dataParts.length > 2 ? dataParts[2] : 'Unknown';
-                    final String weight =
-                        dataParts.length > 3 ? dataParts[3] : 'Unknown';
+                    final String employeeId = dataParts.isNotEmpty
+                        ? dataParts[0].split(':')[1].trim()
+                        : 'Unknown';
+                    final String fullName = dataParts.length > 1
+                        ? dataParts[1].split(':')[1].trim()
+                        : 'Unknown';
+                    final String phoneNumber = dataParts.length > 2
+                        ? dataParts[2].split(':')[1].trim()
+                        : 'Unknown';
 
-                    // Navigate to QRResultScreen with the scanned data
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => QRResultScreen(
-                          employeeId: barcodeValue, // หรือค่าเริ่มต้น
-                          fullName: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
-                          weight: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          employeeId: employeeId,
+                          fullName: fullName,
+                          weight: stableWeight,
                           scanDateTime: DateTime.now(),
-                          phoneNumber: '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
-                          stableWeight:
-                              '', // ค่าเริ่มต้นหรือค่าที่ได้จากการสแกน
+                          phoneNumber: phoneNumber,
                           barcodeValue: barcodeValue,
                         ),
                       ),
                     );
-                    break; // Break the loop after the first successful scan
+                    break;
                   }
                 }
               } catch (e) {
@@ -130,6 +254,37 @@ class _QRScanScreenState extends State<QRScanScreen>
             },
           ),
           _buildScannerOverlay(context),
+          // Add the stable weight display in the top-right corner
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'น้ำหนัก: $stableWeight กก.',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  isConnected
+                      ? 'Connected'
+                      : isDisconnected
+                          ? 'Disconnected'
+                          : 'Connecting...',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Optionally, display the last scanned data at the bottom
           if (_scannedData != null)
             Positioned(
               bottom: 0,
@@ -139,7 +294,7 @@ class _QRScanScreenState extends State<QRScanScreen>
                 color: Colors.black54,
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Last Scanned: $_scannedData',
+                  'Last Scanned: $_scannedData, น้ำหนัก: $stableWeight กก.',
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
@@ -184,86 +339,66 @@ class _QRScanScreenState extends State<QRScanScreen>
         Align(
           alignment: Alignment.center,
           child: SizedBox(
-            width: 250,
-            height: 250,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: Colors.white, width: 4),
-                        left: BorderSide(color: Colors.white, width: 4),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: Colors.white, width: 4),
-                        right: BorderSide(color: Colors.white, width: 4),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.white, width: 4),
-                        left: BorderSide(color: Colors.white, width: 4),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.white, width: 4),
-                        right: BorderSide(color: Colors.white, width: 4),
-                      ),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.center,
-                  child: FadeTransition(
-                    opacity: _animationController,
-                    child: Container(
-                      width: 240,
-                      height: 240,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.5), width: 2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            width: 230,
+            height: 230,
+            child: AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: ScannerOverlayPainter(_animationController.value),
+                );
+              },
             ),
           ),
         ),
       ],
     );
+  }
+}
+
+class ScannerOverlayPainter extends CustomPainter {
+  final double progress;
+
+  ScannerOverlayPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double strokeWidth = 6.0;
+    final Paint paint = Paint()
+      ..color = const Color.fromARGB(255, 255, 255, 255)
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    const double cornerLength = 50.0;
+
+    final Path path = Path();
+    final Rect rect = Offset.zero & size;
+
+    // Top left corner
+    path.moveTo(rect.left + cornerLength, rect.top);
+    path.lineTo(rect.left, rect.top);
+    path.lineTo(rect.left, rect.top + cornerLength);
+
+    // Top right corner
+    path.moveTo(rect.right - cornerLength, rect.top);
+    path.lineTo(rect.right, rect.top);
+    path.lineTo(rect.right, rect.top + cornerLength);
+
+    // Bottom left corner
+    path.moveTo(rect.left, rect.bottom - cornerLength);
+    path.lineTo(rect.left, rect.bottom);
+    path.lineTo(rect.left + cornerLength, rect.bottom);
+
+    // Bottom right corner
+    path.moveTo(rect.right - cornerLength, rect.bottom);
+    path.lineTo(rect.right, rect.bottom);
+    path.lineTo(rect.right, rect.bottom - cornerLength);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(ScannerOverlayPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }

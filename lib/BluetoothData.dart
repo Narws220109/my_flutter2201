@@ -1,8 +1,7 @@
-// ignore_for_file: prefer_single_quotes, avoid_print
+// ignore_for_file: prefer_final_locals, prefer_final_in_for_each
 
-import 'dart:typed_data';
 import 'dart:async';
-import 'dart:math'; // สำหรับการคำนวณทางคณิตศาสตร์
+import 'dart:math'; // ใช้สำหรับคำนวณทางคณิตศาสตร์
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,148 +15,146 @@ class BluetoothPage extends StatefulWidget {
 
 class _BluetoothPageState extends State<BluetoothPage> {
   BluetoothConnection? connection;
-  String realTimeWeight = ''; // ค่าน้ำหนักแบบเรียลทาม
-  String stableWeight = ''; // ค่าน้ำหนักที่คงที่
+  String realTimeWeight = '00.00';
+  String stableWeight = '00.00';
   bool isConnecting = true;
   bool isConnected = false;
   bool isDisconnected = false;
   String errorMessage = '';
-  Timer? _updateTimer; // ตัวแปรสำหรับ Timer
-  List<double> weightReadings = <double>[]; // เก็บค่าที่รับล่าสุด
-  final int maxStableReadings = 10; // จำนวนค่าที่ใช้ในการคำนวณค่าเฉลี่ย
-  final double stableThreshold = 5; // ความแตกต่างสูงสุดเพื่อให้ถือว่า "นิ่ง"
+  Timer? _updateTimer;
+  List<double> weightReadings = <double>[];
+  double slope = 0;
+  double intercept = 0;
+
+  Map<int, RangeValues> calibrationValues = {
+    0: const RangeValues(0, 0),
+    10: const RangeValues(0, 0),
+    20: const RangeValues(0, 0),
+    30: const RangeValues(0, 0),
+    40: const RangeValues(0, 0),
+    50: const RangeValues(0, 0),
+    60: const RangeValues(0, 0),
+  };
+
+  final Map<int, TextEditingController> calibrationControllers = {};
 
   @override
   void initState() {
     super.initState();
     _requestPermissions();
+    calibrationControllers.addAll({
+      0: TextEditingController(),
+      10: TextEditingController(),
+      20: TextEditingController(),
+      30: TextEditingController(),
+      40: TextEditingController(),
+      50: TextEditingController(),
+      60: TextEditingController(),
+    });
   }
 
   Future<void> _requestPermissions() async {
-    if (await Permission.bluetooth.isGranted &&
-        await Permission.bluetoothScan.isGranted &&
-        await Permission.bluetoothConnect.isGranted) {
+    // ขอสิทธิ์ Bluetooth
+    await Permission.bluetooth.request();
+    if (await Permission.bluetooth.isGranted) {
       _connectToDevice();
-    } else {
-      await <Permission>[
-        Permission.bluetooth,
-        Permission.bluetoothScan,
-        Permission.bluetoothConnect,
-      ].request();
-
-      if (await Permission.bluetooth.isGranted &&
-          await Permission.bluetoothScan.isGranted &&
-          await Permission.bluetoothConnect.isGranted) {
-        _connectToDevice();
-      } else {
-        setState(() {
-          isConnecting = false;
-          errorMessage =
-              "Please grant Bluetooth permissions in your device settings.";
-        });
-      }
     }
   }
 
   Future<void> _connectToDevice() async {
-    final List<BluetoothDevice> devices =
-        await FlutterBluetoothSerial.instance.getBondedDevices();
-
-    BluetoothDevice? targetDevice;
+    // การเชื่อมต่อกับอุปกรณ์ Bluetooth
     try {
-      targetDevice = devices.firstWhere(
-          (BluetoothDevice device) => device.name == "ESP32_Bluetooth");
-    } catch (e) {
-      targetDevice = null;
-    }
-
-    if (targetDevice != null) {
-      try {
-        connection = await BluetoothConnection.toAddress(targetDevice.address);
-        setState(() {
-          isConnecting = false;
-          isConnected = true;
-        });
-
-        connection!.input!.listen((Uint8List data) {
-          final String newData = String.fromCharCodes(data).trim();
-          final double voltage =
-              double.tryParse(newData) ?? 0; // รับค่าจาก ESP32
-          final double weight = _calculateWeight(voltage); // คำนวณน้ำหนัก
-
-          setState(() {
-            realTimeWeight =
-                weight.toStringAsFixed(3); // แสดงค่าน้ำหนักแบบเรียลทาม
-          });
-
-          _addWeightReading(weight); // เก็บค่าล่าสุดเพื่อคำนวณค่าเฉลี่ย
-
-          if (_updateTimer == null || !_updateTimer!.isActive) {
-            // เริ่มต้น Timer สำหรับการอัปเดตค่าทุก ๆ 3 วินาที
-            // ignore: prefer_const_constructors
-            _updateTimer = Timer(Duration(seconds: 3), () {
-              final double? averageWeight = _calculateStableWeight();
-              if (averageWeight != null) {
-                setState(() {
-                  stableWeight = averageWeight
-                      .toStringAsFixed(3); // แสดงค่าน้ำหนักที่คงที่
-                });
-              }
-            });
-          }
-        }).onDone(() {
-          setState(() {
-            isConnected = false;
-            isDisconnected = true;
-          });
-          print("Disconnected");
-        });
-      } catch (e) {
-        setState(() {
-          isConnecting = false;
-          isConnected = false;
-          errorMessage = "Failed to connect: $e";
-        });
-        print("Failed to connect: $e");
-      }
-    } else {
+      // สมมติว่าเชื่อมต่อกับอุปกรณ์แล้ว
       setState(() {
+        isConnected = true;
         isConnecting = false;
-        isConnected = false;
-        errorMessage = "Device not found!";
       });
-      print("Device not found!");
+
+      // เริ่มต้นการรับข้อมูลจากเซ็นเซอร์และคำนวณน้ำหนัก
+      _startReceivingData();
+    } catch (error) {
+      setState(() {
+        isConnected = false;
+        errorMessage = 'ไม่สามารถเชื่อมต่อได้';
+      });
     }
+  }
+
+  void _startReceivingData() {
+    // เริ่มต้นการรับค่าแรงดันจากเซ็นเซอร์ (เชื่อมต่อผ่าน Bluetooth)
+    _updateTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      double voltage =
+          _getRandomVoltage(); // แทนการรับค่าแรงดันจริงจากเซ็นเซอร์
+
+      double weight = _calculateWeight(voltage);
+      _addWeightReading(weight);
+
+      double? averageWeight = _calculateAverageWeight();
+      if (averageWeight != null) {
+        setState(() {
+          realTimeWeight = weight.toStringAsFixed(2);
+          stableWeight = averageWeight.toStringAsFixed(2);
+        });
+      }
+    });
+  }
+
+  double _getRandomVoltage() {
+    // จำลองการรับค่าแรงดันจากเซ็นเซอร์
+    return Random().nextDouble() * 5; // จำลองแรงดันในช่วง 0-5 โวลต์
   }
 
   double _calculateWeight(double voltage) {
-    // คำนวณน้ำหนักจากแรงดัน 0-4095 ให้กลายเป็น 0-60 กิโลกรัม
-    return (voltage / 4095) * 60;
+    // ใช้สมการเชิงเส้นที่คำนวณจากค่าแรงดันและน้ำหนักที่เก็บไว้
+    return intercept + slope * voltage;
   }
 
   void _addWeightReading(double weight) {
-    if (weightReadings.length >= maxStableReadings) {
-      weightReadings.removeAt(0); // ลบค่าแรกออกเมื่อมีค่าครบ 10 ค่า
-    }
     weightReadings.add(weight);
+    if (weightReadings.length > 10) {
+      weightReadings.removeAt(0); // ลบค่าที่เก่าที่สุด
+    }
   }
 
-  double? _calculateStableWeight() {
-    if (weightReadings.length < maxStableReadings) {
-      return null; // ถ้ายังมีค่าที่อ่านไม่ครบ 10 ค่า
+  double? _calculateAverageWeight() {
+    if (weightReadings.isNotEmpty) {
+      return weightReadings.reduce((a, b) => a + b) / weightReadings.length;
     }
-
-    // ตรวจสอบว่าความแตกต่างของค่าน้ำหนักแต่ละค่าน้อยกว่า threshold หรือไม่
-    final double maxWeight = weightReadings.reduce(max);
-    final double minWeight = weightReadings.reduce(min);
-    if ((maxWeight - minWeight).abs() <= stableThreshold) {
-      // ถ้าค่าคงที่แล้ว ให้คำนวณค่าเฉลี่ย
-      final double totalWeight =
-          weightReadings.reduce((double a, double b) => a + b);
-      return totalWeight / weightReadings.length;
-    }
-
     return null;
+  }
+
+  void _calibrate() {
+    // คำนวณสมการเชิงเส้นจากค่าที่ผู้ใช้กรอกในแต่ละช่วงน้ำหนัก
+    List<double> voltages = [];
+    List<double> weights = [];
+
+    calibrationValues.forEach((weight, range) {
+      if (range.start != 0) {
+        voltages.add(range.start);
+        weights.add(weight.toDouble());
+      }
+    });
+
+    if (voltages.isNotEmpty && weights.isNotEmpty) {
+      // คำนวณค่าความชัน (slope) และ intercept
+      double n = voltages.length.toDouble();
+      double sumX = voltages.reduce((a, b) => a + b);
+      double sumY = weights.reduce((a, b) => a + b);
+      double sumXY = 0;
+      double sumX2 = 0;
+
+      for (int i = 0; i < voltages.length; i++) {
+        sumXY += voltages[i] * weights[i];
+        sumX2 += pow(voltages[i], 2);
+      }
+
+      slope = (n * sumXY - sumX * sumY) / (n * sumX2 - pow(sumX, 2));
+      intercept = (sumY - slope * sumX) / n;
+
+      setState(() {
+        // อัปเดตสมการ
+      });
+    }
   }
 
   @override
@@ -165,54 +162,75 @@ class _BluetoothPageState extends State<BluetoothPage> {
     if (connection != null) {
       connection!.dispose();
     }
-    _updateTimer?.cancel(); // ยกเลิก Timer
+    _updateTimer?.cancel();
+    for (TextEditingController controller in calibrationControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    String statusText;
-    if (isConnecting) {
-      statusText = 'Connecting...';
-    } else if (isConnected) {
-      statusText = 'Connected';
-    } else if (isDisconnected) {
-      statusText = 'Disconnected';
-    } else {
-      statusText = 'Not Connected';
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Bluetooth Data"),
+        title: const Text('Weight Calculation'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              statusText,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Real-Time Weight: $realTimeWeight kg", // แสดงค่าน้ำหนักแบบเรียลทาม
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Stable Weight: $stableWeight kg", // แสดงค่าน้ำหนักที่คงที่
-              style: const TextStyle(fontSize: 24),
-            ),
-            if (errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  errorMessage,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
-                ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Real-time Weight:',
+                style: TextStyle(fontSize: 20),
               ),
-          ],
+              Text(
+                '${double.parse(realTimeWeight).toStringAsFixed(2).padLeft(5, '0')} kg',
+                style: const TextStyle(fontSize: 36),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Stable Weight (Average):',
+                style: TextStyle(fontSize: 20),
+              ),
+              Text(
+                '${double.parse(stableWeight).toStringAsFixed(2).padLeft(5, '0')} kg',
+                style: const TextStyle(fontSize: 36),
+              ),
+              const SizedBox(height: 20),
+              const Text('Calibration (0-60 kg):'),
+              Column(
+                children: calibrationValues.keys.map((weight) {
+                  return Row(
+                    children: [
+                      Text('$weight kg: '),
+                      Expanded(
+                        child: TextField(
+                          controller: calibrationControllers[weight],
+                          decoration: const InputDecoration(
+                            labelText: 'Voltage',
+                          ),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            setState(() {
+                              calibrationValues[weight] =
+                                  RangeValues(double.tryParse(value) ?? 0, 0);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _calibrate,
+                child: const Text('Calibrate'),
+              ),
+            ],
+          ),
         ),
       ),
     );

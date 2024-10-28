@@ -1,12 +1,14 @@
-// ignore_for_file: file_names, directives_ordering, unused_import, duplicate_ignore, duplicate_import, sort_constructors_first, always_specify_types, avoid_redundant_argument_values
+// ignore_for_file: file_names, directives_ordering, unused_import, duplicate_ignore, duplicate_import, sort_constructors_first, always_specify_types, avoid_redundant_argument_values, avoid_unused_constructor_parameters
 import 'package:flutter/material.dart';
 // ignore: unused_import
-import 'DataPage.dart';
+
 import 'QRScanScreen.dart';
+import 'storage_service.dart';
 import 'ScannQr_code.dart'; // นำเข้าไฟล์ QRScanScreen
 import 'Manage_employees.dart'; // เพิ่มการนำเข้าหน้า EmployeeManagementPage
 import 'BluetoothData.dart'; // เพิ่มการนำเข้าหน้า BluetoothData
 import 'QrCodePrinter.dart'; // เพิ่มการนำเข้าหน้า QrCodePrinter
+import 'User_account.dart'; // เพิ่มการนำเข้าหน้า QrCodePrinter
 
 class HomePage extends StatelessWidget {
   final String name;
@@ -20,6 +22,7 @@ class HomePage extends StatelessWidget {
     required this.employeeId,
     required this.phoneNumber,
     required this.imageUrl,
+    required String title,
   });
 
   @override
@@ -32,13 +35,11 @@ class HomePage extends StatelessWidget {
             icon: const Icon(Icons.search),
             onPressed: () {
               // การทำงานเมื่อกดปุ่มค้นหา
-              // ในที่นี้ยังไม่ได้ระบุการทำงาน
             },
           ),
         ],
       ),
       body: Column(
-        // ignore: avoid_redundant_argument_values
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           const SizedBox(height: 20.0),
@@ -68,7 +69,7 @@ class HomePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (BuildContext context) =>
-                              const QRScanScreen()), 
+                              const QRScanScreen()),
                     );
                   },
                 ),
@@ -101,14 +102,19 @@ class HomePage extends StatelessWidget {
                   },
                 ),
                 _buildMenuItem(
-                  icon: Icons.qr_code,
-                  title: 'สร้าง QR Code',
-                  onTap: () {
+                  icon: Icons.history,
+                  title: 'ประวัติการชั่งน้ำหนัก',
+                  onTap: () async {
+                    final storageService = StorageService();
+                    final qrData = await storageService.getQrData();
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) =>
-                              const QrCodePrinterPage()),
+                        builder: (BuildContext context) => RecordPage(
+                          dailyResults: qrData,
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -116,6 +122,15 @@ class HomePage extends StatelessWidget {
                   icon: Icons.settings,
                   title: 'เมนูตั้งค่า',
                   onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => Setting(
+                                loggedInUserId: employeeId,
+                                name: name, // ส่งชื่อผู้ใช้
+                                phoneNumber: phoneNumber, // ส่งเบอร์โทร
+                              )),
+                    );
                     // เมนูตั้งค่า
                   },
                 ),
@@ -131,7 +146,7 @@ class HomePage extends StatelessWidget {
     required String name,
     required String employeeId,
     required String phoneNumber,
-    required String imageUrl,
+    required String imageUrl, // ยังคงอยู่หากต้องการใช้งานในอนาคต
   }) {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -143,9 +158,15 @@ class HomePage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          CircleAvatar(
+          const CircleAvatar(
             radius: 35.0,
-            backgroundImage: NetworkImage(imageUrl),
+            backgroundColor:
+                Color.fromARGB(255, 249, 214, 243), // สีพื้นหลังสำหรับไอคอน
+            child: Icon(
+              Icons.person,
+              size: 50.0, // ขนาดไอคอน
+              color: Color.fromARGB(255, 247, 186, 194), // สีของไอคอน
+            ),
           ),
           const SizedBox(width: 10.0),
           Column(
