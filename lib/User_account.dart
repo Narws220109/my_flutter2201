@@ -1,5 +1,3 @@
-// ignore_for_file: unused_element
-
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
@@ -24,7 +22,7 @@ class Setting extends StatefulWidget {
 class _SettingState extends State<Setting> {
   late Database _database;
   Map<String, dynamic>? _loggedInUser;
-  bool _isDarkTheme = false; // สถานะของธีม
+  // bool _isDarkTheme = false; // สถานะของธีม
 
   @override
   void initState() {
@@ -47,11 +45,11 @@ class _SettingState extends State<Setting> {
     });
   }
 
-  void _toggleTheme() {
-    setState(() {
-      _isDarkTheme = !_isDarkTheme;
-    });
-  }
+  // void _toggleTheme() {
+  //   setState(() {
+  //     _isDarkTheme = !_isDarkTheme;
+  //   });
+  // }
 
   Widget _buildInfoCard(IconData icon, String title, String value) {
     return Card(
